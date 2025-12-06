@@ -1,27 +1,17 @@
-// api/db.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-let cached = global._mongoClientPromise; // persisted across invocations in serverless
+let isConnected = false;
 
-if (!cached) {
-  cached = global._mongoClientPromise = { conn: null, promise: null };
-}
+const connectDB = async () => {
+  if (isConnected) return;
 
-async function connectDB() {
-  if (cached.conn) {
-    return cached.conn;
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    isConnected = conn.connections[0].readyState;
+    console.log("MongoDB Connected");
+  } catch (err) {
+    console.error("MongoDB connection error:", err.message);
   }
-  if (!cached.promise) {
-    const opts = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    };
-    cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
-  }
-  cached.conn = await cached.promise;
-  return cached.conn;
-}
+};
 
 module.exports = connectDB;
