@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // Initial state
 const initialState = {
-  transactions: [],
+  transactions: [],  // always an array
   error: null,
   loading: true
 }
@@ -23,12 +23,13 @@ export const GlobalProvider = ({ children }) => {
 
       dispatch({
         type: 'GET_TRANSACTIONS',
-        payload: res.data.data
+        payload: Array.isArray(res.data?.data) ? res.data.data : []  // safe fallback
       });
     } catch (err) {
+      console.error(err); // log for debugging
       dispatch({
         type: 'TRANSACTION_ERROR',
-        payload: err.response.data.error
+        payload: err.response?.data?.error || 'Server Error'
       });
     }
   }
@@ -42,18 +43,17 @@ export const GlobalProvider = ({ children }) => {
         payload: id
       });
     } catch (err) {
+      console.error(err);
       dispatch({
         type: 'TRANSACTION_ERROR',
-        payload: err.response.data.error
+        payload: err.response?.data?.error || 'Server Error'
       });
     }
   }
 
   async function addTransaction(transaction) {
     const config = {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     }
 
     try {
@@ -61,24 +61,27 @@ export const GlobalProvider = ({ children }) => {
 
       dispatch({
         type: 'ADD_TRANSACTION',
-        payload: res.data.data
+        payload: res.data?.data || {}  // fallback to empty object
       });
     } catch (err) {
+      console.error(err);
       dispatch({
         type: 'TRANSACTION_ERROR',
-        payload: err.response.data.error
+        payload: err.response?.data?.error || 'Server Error'
       });
     }
   }
 
-  return (<GlobalContext.Provider value={{
-    transactions: state.transactions,
-    error: state.error,
-    loading: state.loading,
-    getTransactions,
-    deleteTransaction,
-    addTransaction
-  }}>
-    {children}
-  </GlobalContext.Provider>);
+  return (
+    <GlobalContext.Provider value={{
+      transactions: state.transactions,
+      error: state.error,
+      loading: state.loading,
+      getTransactions,
+      deleteTransaction,
+      addTransaction
+    }}>
+      {children}
+    </GlobalContext.Provider>
+  );
 }
