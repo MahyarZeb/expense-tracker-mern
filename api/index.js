@@ -1,18 +1,28 @@
-// api/index.js
-const serverless = require("serverless-http");
-const express = require("express");
-const cors = require("cors");
-const transactionsRouter = require("./routes/transactions");
-require("dotenv").config();
-const connectDB = require("./db");
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import connectDB from "./db.js";
+import transactionRoutes from "./routes/transactions.js";
+
+dotenv.config();
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
+// Connect DB
 connectDB();
 
-app.use("/api/v1/transactions", transactionsRouter);
+// Routes
+app.use("/api/v1/transactions", transactionRoutes);
 
-module.exports = app;
-module.exports.handler = serverless(app);
+// Export for Vercel
+export default app;
+
+// If running locally
+if (process.env.VERCEL !== "1") {
+  app.listen(5000, () =>
+    console.log("Server running locally on http://localhost:5000")
+  );
+}
